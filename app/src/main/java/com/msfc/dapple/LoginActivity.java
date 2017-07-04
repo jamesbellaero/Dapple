@@ -78,7 +78,6 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
     /**
      * Keep track of the login task to ensure we can cancel it if requested.
      */
-    private UserLoginTask mAuthTask = null;
 
     // UI references.
     private AutoCompleteTextView musernameView;
@@ -168,9 +167,6 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
      * errors are presented and no actual login attempt is made.
      */
     private void attemptLogin() {
-        if (mAuthTask != null) {
-            return;
-        }
 
         // Reset errors.
         musernameView.setError(null);
@@ -202,8 +198,8 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
 
             RequestQueue queue = Volley.newRequestQueue(this);
 
-            String url ="http://sample-env-2.m6ifx8gegy.us-east-2.elasticbeanstalk.com:80/api/login";
-//                String url = "http://10.0.2.2:80/api/login";
+            //String url ="http://sample-env-2.m6ifx8gegy.us-east-2.elasticbeanstalk.com:80/api/login";
+            String url = "http://10.0.2.2:80/api/login";
             request = new ListenableRequest( Request.Method.POST,url,
                     new Response.Listener<String>() {
                         @Override
@@ -352,74 +348,6 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
      * Represents an asynchronous login/registration task used to authenticate
      * the user.
      */
-    public class UserLoginTask extends AsyncTask<Void, Void, Boolean> {
 
-        private final String musername;
-        private final String mPassword;
-        CompletedListener listener;
-        UserLoginTask(String username, String password, CompletedListener listener) {
-            musername = username;
-            mPassword = password;
-            this.listener=listener;
-        }
-
-        @Override
-        protected Boolean doInBackground(Void... params) {
-            // TODO: attempt authentication against a network service.
-
-            try{
-//                URL url = new URL("http://sample-env-2.m6ifx8gegy.us-east-2.elasticbeanstalk.com:80/api/login");
-//               // Toast t = new Toast((LoginActivity)listener);
-//               // t.show();
-//                HttpURLConnection conn = (HttpURLConnection)url.openConnection();
-//                String postDataString="{\"username\":\"james\",\"password\":\"3821594011\"}";
-//                byte[] postData=postDataString.getBytes();
-//                conn.setDoOutput(true);
-//                conn.setDoOutput(true);
-//                conn.setInstanceFollowRedirects(false);
-//                conn.setRequestMethod("POST");
-//                conn.setRequestProperty("Content-Type","application/json");
-//                conn.setRequestProperty("Content-Length",""+postData.length);
-//                conn.setRequestProperty("charset","UTF-8");
-//
-//                DataOutputStream wr=new DataOutputStream(conn.getOutputStream());
-//                wr.write(postData);
-//                wr.close();
-//                conn.getOutputStream().close();
-//                int a =conn.getResponseCode();
-//                String b = conn.getResponseMessage();
-//                Map<String, List<String>> headerFields = conn.getHeaderFields();
-//                cookie=headerFields.get("Set-Cookie").get(0);
-            } catch (Exception e) {
-                e.printStackTrace();
-                return false;
-            }
-
-
-            return true;
-        }
-
-        @Override
-        protected void onPostExecute(final Boolean success) {
-            mAuthTask = null;
-            showProgress(false);
-
-            if (success) {
-               // listener.completed(true);
-                finish();
-            } else {
-                mPasswordView.setError(getString(R.string.error_incorrect_password));
-                mPasswordView.requestFocus();
-             //   listener.completed(false);
-            }
-        }
-
-        @Override
-        protected void onCancelled() {
-            mAuthTask = null;
-            showProgress(false);
-       //     listener.completed(false);
-        }
-    }
 }
 
