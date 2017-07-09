@@ -5,6 +5,7 @@ import com.android.volley.Response;
 import com.android.volley.toolbox.StringRequest;
 
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -14,12 +15,11 @@ import java.util.Map;
  */
 
 public class ListenableRequest extends StringRequest {
-    CompletedListener listener;
+    ArrayList<NetworkListener> listeners;
     Map<String,String> params;
-    String cookies;
-    public ListenableRequest(int method, String url, Response.Listener<String> l2, Response.ErrorListener l3,CompletedListener listener){
+    public ListenableRequest(int method, String url, Response.Listener<String> l2, Response.ErrorListener l3){
         super(method,url,l2,l3);
-        this.listener=listener;
+        listeners=new ArrayList<>();
     }
     @Override
     protected Map<String,String> getParams() {
@@ -32,13 +32,13 @@ public class ListenableRequest extends StringRequest {
     protected Response<String> parseNetworkResponse(NetworkResponse response) {
         // since we don't know which of the two underlying network vehicles
         // will Volley use, we have to handle and store session cookies manually
-        Map<String, String> responseHeaders = response.headers;
-        String rawCookies = responseHeaders.get("Set-Cookie");
-        String[] splitCookies=rawCookies.split("[=;]");
-        cookies=splitCookies[1];
+
+        for(NetworkListener listener: listeners) {
+            listener.onNetworkingResponse(response);
+        }
         return super.parseNetworkResponse(response);
     }
-    public String getCookies(){
-        return cookies;
+    public void addListener(NetworkListener nl){
+        listeners.add(nl);
     }
 }

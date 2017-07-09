@@ -5,6 +5,7 @@ import android.animation.AnimatorListenerAdapter;
 import android.annotation.TargetApi;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.net.NetworkRequest;
 import android.support.annotation.NonNull;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
@@ -60,14 +61,12 @@ import static android.Manifest.permission.READ_CONTACTS;
 /**
  * A login screen that offers login via username/password.
  */
-public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<Cursor>, CompletedListener {
+public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<Cursor>,  NetworkListener {
 
     /**
      * Id to identity READ_CONTACTS permission request.
      */
     private static final int REQUEST_READ_CONTACTS = 0;
-    private String cookie="";
-    ListenableRequest request;
     /**
      * A dummy authentication store containing known user names and passwords.
      * TODO: remove after connecting to a real authentication system.
@@ -115,6 +114,8 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
 
         mLoginFormView = findViewById(R.id.login_form);
         mProgressView = findViewById(R.id.login_progress);
+       // String url = "http://10.0.2.2:80"
+        Networking.setupNetworking("http://sample-env-2.m6ifx8gegy.us-east-2.elasticbeanstalk.com:80");
     }
 
     private void populateAutoComplete() {
@@ -195,41 +196,7 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
             // Show a progress spinner, and kick off a background task to
             // perform the user login attempt.
             showProgress(true);
-
-            RequestQueue queue = Volley.newRequestQueue(this);
-
-            //String url ="http://sample-env-2.m6ifx8gegy.us-east-2.elasticbeanstalk.com:80/api/login";
-            String url = "http://10.0.2.2:80/api/login";
-            request = new ListenableRequest( Request.Method.POST,url,
-                    new Response.Listener<String>() {
-                        @Override
-                        public void onResponse(String response) {
-                            // Display the first 500 characters of the response string.
-                            try {
-                                completed(true);
-
-//                                    VolleyLog.v("Response:%n %s", response);
-                            } catch (Exception e) {
-                                e.printStackTrace();
-
-                                completed(false);
-                            }
-                        }
-                    }, new Response.ErrorListener() {
-                @Override
-                public void onErrorResponse(VolleyError error) {
-                    error.printStackTrace();
-                    completed(false);
-                    int a = error.networkResponse.statusCode;
-
-                }
-            },this);
-            Map<String,String> parameters=new HashMap<>();
-            parameters.put("username","james");
-            parameters.put("password","passdiddle");
-            request.setParams(parameters);
-// Add the request to the RequestQueue.
-            queue.add(request);
+            Networking.login(musernameView.getText().toString(),mPasswordView.getText().toString(),this);
           //  mAuthTask = new UserLoginTask(username, password,this);
            // mAuthTask.execute((Void) null);
         }
@@ -279,16 +246,6 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
             mProgressView.setVisibility(show ? View.VISIBLE : View.GONE);
             mLoginFormView.setVisibility(show ? View.GONE : View.VISIBLE);
         }
-    }
-    public void completed(boolean success){
-        showProgress(false);
-        if(success){
-            cookie=request.getCookies();
-            Intent intent = new Intent(this,MenuActivity.class);
-            intent.putExtra("cookie",cookie);
-            startActivity(intent);
-        }
-
     }
     @Override
     public Loader<Cursor> onCreateLoader(int i, Bundle bundle) {
@@ -342,6 +299,19 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
 
         int ADDRESS = 0;
         int IS_PRIMARY = 1;
+    }
+    public void onNetworkingResponse(NetworkResponse response){
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                showProgress(false);
+            }
+        });
+
+        if(response.statusCode<400){
+            Intent intent = new Intent(this,MenuActivity.class);
+            startActivity(intent);
+        }
     }
 
     /**

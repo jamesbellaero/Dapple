@@ -1,68 +1,81 @@
 package com.msfc.dapple;
 
-import android.content.Context;
-import android.content.Intent;
-import android.graphics.Bitmap;
-import android.hardware.Camera;
+
+import android.app.Activity;
 import android.os.Bundle;
-import android.provider.MediaStore;
 import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.Toolbar;
-import android.view.SurfaceHolder;
-import android.view.SurfaceView;
+import android.view.TextureView;
 import android.view.View;
-import android.view.ViewGroup;
-import android.widget.ImageView;
 
-import java.io.IOException;
-import java.util.List;
+import com.android.volley.NetworkResponse;
+import com.android.volley.Response;
 
-public class CameraActivity extends AppCompatActivity {
+import org.w3c.dom.Text;
+
+import java.nio.ByteBuffer;
+
+
+public class CameraActivity extends AppCompatActivity implements CompletedListener,NetworkListener {
     String cookie;
+    TextureView view;
     Camera camera;
-    CameraPreview preview;
+    byte[] imageBytes;
+    Activity activity;
+    FloatingActionButton postButton, retryButton;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        activity=this;
         setContentView(R.layout.activity_camera);
-        Intent cookieIntent = getIntent();
-        cookie=cookieIntent.getStringExtra("cookie");
+        view = (TextureView) findViewById(R.id.cameraView);
 
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
+        postButton = (FloatingActionButton) findViewById(R.id.postButton);
+        postButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                Networking.postImage(imageBytes,activity);
+            }
+        });
+        retryButton = (FloatingActionButton) findViewById(R.id.retryButton);
+        retryButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                camera.stop();
+                camera=new Camera(activity,(TextureView) findViewById(R.id.cameraView));
+                //Networking.postImage(imageBytes,activity);
             }
         });
     }
-    protected void onResume(){
+
+
+    public void onResume(){
         super.onResume();
-
+        postButton.setVisibility(View.INVISIBLE);
+        retryButton.setVisibility(View.INVISIBLE);
+        camera=new Camera(this,view);
+        camera.initCamera();
     }
-    static final int REQUEST_IMAGE_CAPTURE = 1;
-
-    private boolean safeCameraOpen(int id) {
-        boolean qOpened = false;
-
-        try {
-            releaseCameraAndPreview();
-            camera = Camera.open(id);
-            qOpened = (camera != null);
-        } catch (Exception e) {
-            e.printStackTrace();
+    public void onPause(){
+        super.onPause();
+    }
+    public void onBackPressed(){
+        super.onBackPressed();
+        camera.stop();
+    }
+    public void completed(boolean success){
+        if(success) {
+            ByteBuffer buffer = camera.getImage().getPlanes()[0].getBuffer();
+            imageBytes = new byte[buffer.capacity()];
+            buffer.get(imageBytes);
+            postButton.setVisibility(View.VISIBLE);
+            retryButton.setVisibility(View.VISIBLE);
         }
-
-        return qOpened;
+        camera.stop();
+    }
+    public void onNetworkingResponse(NetworkResponse response){
+        System.out.println(response.statusCode);
     }
 
-    private void releaseCameraAndPreview() {
-        preview.setCamera(null);
-        if (camera != null) {
-            camera.release();
-            camera = null;
-        }
-    }
 }
 
