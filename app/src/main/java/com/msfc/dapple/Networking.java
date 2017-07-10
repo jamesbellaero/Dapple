@@ -86,7 +86,6 @@ public class Networking{
         Map<String,String> parameters=new HashMap<>();
         char[] chars = new char[bytes.length/2+bytes.length%2];
         for(int i=0;i<chars.length;i++){
-
             chars[i]=(char)(ByteOperations.bytesToShort(bytes[i*2],i*2+1<bytes.length?bytes[i*2+1]:0));
         }
         String toSend = new String(chars);
@@ -94,6 +93,8 @@ public class Networking{
         parameters.put("data",toSend);
         System.out.println(toSend.length());
         request.setParams(parameters);
+        // Add cookie
+        request.setCookie(cookie);
         // Add the request to the RequestQueue.
         queue.add(request);
     }
